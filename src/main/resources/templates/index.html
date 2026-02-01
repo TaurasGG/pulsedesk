@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PulseDesk</title>
+</head>
+<body>
+
+<h1>PulseDesk – Comment to Ticket</h1>
+
+<h2>Submit Comment</h2>
+<input id="author" placeholder="Author"/><br><br>
+<textarea id="text" placeholder="Comment"></textarea><br><br>
+<button onclick="submitComment()">Submit</button>
+
+<h2>Comments</h2>
+<ul id="comments"></ul>
+
+<h2>Tickets</h2>
+<ul id="tickets"></ul>
+
+<script>
+    async function submitComment() {
+        await fetch('/comments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                author: document.getElementById('author').value,
+                text: document.getElementById('text').value
+            })
+        });
+        loadData();
+    }
+
+    async function loadData() {
+        const comments = await fetch('/comments').then(r => r.json());
+        const tickets = await fetch('/tickets').then(r => r.json());
+
+        document.getElementById('comments').innerHTML =
+            comments.map(c =>
+                `<li><b>${c.author}</b>: ${c.text} (${c.ticketCreated})</li>`
+            ).join('');
+
+        document.getElementById('tickets').innerHTML =
+            tickets.map(t =>
+                `<li>
+                <b>${t.title}</b> [${t.category} | ${t.priority}]<br/>
+                From comment ID: ${t.originalComment.id}
+            </li>`
+            ).join('');
+    }
+
+    loadData();
+</script>
+
+</body>
+</html>

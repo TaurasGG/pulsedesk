@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PulsedeskApplication {
+public class PulseDeskApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PulsedeskApplication.class, args);
+	static void main(String[] args) {
+		SpringApplication.run(PulseDeskApplication.class, args);
 	}
 
 }
