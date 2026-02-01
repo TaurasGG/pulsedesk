@@ -2,6 +2,7 @@ package com.pulsedesk.service;
 
 import com.pulsedesk.model.TicketCategory;
 import com.pulsedesk.model.TicketPriority;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import lombok.Setter;
 @Setter
 public class AiTicketResponse {
 
+    @JsonProperty("isTicket")
     private boolean isTicket;
     private String title;
     private TicketCategory category;

@@ -3,6 +3,9 @@ package com.pulsedesk.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Entity representing a user comment submitted to the system.
+ */
 @Entity
 @Getter
 @Setter
@@ -19,5 +22,8 @@ public class Comment {
     @Column(length = 2000)
     private String text;
 
+    /**
+     * Indicates whether a support ticket has been created for this comment.
+     */
     private boolean ticketCreated;
 }

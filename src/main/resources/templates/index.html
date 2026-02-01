@@ -1,55 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>PulseDesk</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseDesk - Support Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .ticket-card {
+            border-left: 5px solid #bdc3c7;
+        }
+        .ticket-HIGH { border-left-color: #e74c3c; }
+        .ticket-MEDIUM { border-left-color: #f39c12; }
+        .ticket-LOW { border-left-color: #2ecc71; }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            color: white;
+            margin-left: 5px;
+        }
+        .bg-category { background-color: #9b59b6; }
+        .bg-priority { background-color: #34495e; }
+        
+        .ticket-summary {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+            background: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            float: right;
+        }
+    </style>
 </head>
 <body>
 
-<h1>PulseDesk – Comment to Ticket</h1>
+<div class="container">
+    <h1>PulseDesk <span style="font-size: 0.5em; color: #7f8c8d;">AI Ticket System</span></h1>
 
-<h2>Submit Comment</h2>
-<input id="author" placeholder="Author"/><br><br>
-<textarea id="text" placeholder="Comment"></textarea><br><br>
-<button onclick="submitComment()">Submit</button>
+    <div class="section">
+        <h2>Submit New Comment</h2>
+        <div class="input-group">
+            <label for="author">Author Name</label>
+            <input id="author" placeholder="e.g. Alice" />
+        </div>
+        <div class="input-group">
+            <label for="text">Comment Description</label>
+            <textarea id="text" placeholder="Describe the issue or feedback..."></textarea>
+        </div>
+        <button id="submitBtn" onclick="submitComment()">Submit Comment</button>
+    </div>
 
-<h2>Comments</h2>
-<ul id="comments"></ul>
-
-<h2>Tickets</h2>
-<ul id="tickets"></ul>
+    <div class="section">
+        <h2>Recent Tickets</h2>
+        <ul id="tickets">Loading tickets...</ul>
+    </div>
+    
+    <div class="section">
+        <h2>Incoming Comments</h2>
+        <ul id="comments">Loading comments...</ul>
+    </div>
+</div>
 
 <script>
     async function submitComment() {
-        await fetch('/comments', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                author: document.getElementById('author').value,
-                text: document.getElementById('text').value
-            })
-        });
-        loadData();
+        const btn = document.getElementById('submitBtn');
+        const author = document.getElementById('author').value;
+        const text = document.getElementById('text').value;
+
+        if (!author || !text) {
+            alert("Please fill in both fields");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Analyzing...";
+
+        try {
+            await fetch('/comments', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ author, text })
+            });
+            
+            // Clear inputs
+            document.getElementById('text').value = '';
+            
+            await loadData();
+        } catch (e) {
+            alert("Error submitting comment: " + e);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Submit Comment";
+        }
     }
 
     async function loadData() {
-        const comments = await fetch('/comments').then(r => r.json());
-        const tickets = await fetch('/tickets').then(r => r.json());
+        try {
+            const [commentsRes, ticketsRes] = await Promise.all([
+                fetch('/comments'),
+                fetch('/tickets')
+            ]);
+            
+            const comments = await commentsRes.json();
+            const tickets = await ticketsRes.json();
 
-        document.getElementById('comments').innerHTML =
-            comments.map(c =>
-                `<li><b>${c.author}</b>: ${c.text} (${c.ticketCreated})</li>`
-            ).join('');
-
-        document.getElementById('tickets').innerHTML =
-            tickets.map(t =>
+            // Render Comments
+            document.getElementById('comments').innerHTML = comments.length ? comments.reverse().map(c =>
                 `<li>
-                <b>${t.title}</b> [${t.category} | ${t.priority}]<br/>
-                From comment ID: ${t.originalComment.id}
-            </li>`
-            ).join('');
+                    <div>
+                        <strong>${c.author}</strong>
+                        <span style="color:${c.ticketCreated ? '#27ae60' : '#c0392b'}">
+                            ${c.ticketCreated ? '✔ Ticket Created' : '✖ No Ticket'}
+                        </span>
+                    </div>
+                    <div style="margin-top:5px;">${c.text}</div>
+                </li>`
+            ).join('') : '<p>No comments yet.</p>';
+
+            // Render Tickets
+            document.getElementById('tickets').innerHTML = tickets.length ? tickets.reverse().map(t =>
+                `<li class="ticket-card ticket-${t.priority}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="margin:0; font-size:1.1em;">${t.title}</h3>
+                        <div>
+                            <span class="badge bg-category">${t.category}</span>
+                            <span class="badge bg-priority">${t.priority}</span>
+                        </div>
+                    </div>
+                    <div class="ticket-summary">
+                        <strong>AI Summary:</strong> ${t.summary || "No summary available"}
+                    </div>
+                    <div style="margin-top:8px; font-size:0.9em; color:#666;">
+                        Original Comment ID: ${t.originalComment ? t.originalComment.id : 'N/A'}
+                    </div>
+                </li>`
+            ).join('') : '<p>No tickets created yet.</p>';
+
+        } catch (e) {
+            console.error("Failed to load data", e);
+        }
     }
 
+    // Load initial data
     loadData();
+    // Poll every 5 seconds
+    setInterval(loadData, 5000);
 </script>
 
 </body>

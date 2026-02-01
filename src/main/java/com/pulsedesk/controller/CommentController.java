@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST controller for managing comments.
+ */
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
@@ -21,6 +24,12 @@ public class CommentController {
         this.commentRepository = commentRepository;
     }
 
+    /**
+     * Submits a new comment.
+     *
+     * @param body Map containing "author" and "text".
+     * @return The created Comment object.
+     */
     @PostMapping
     public Comment submitComment(@RequestBody Map<String, String> body) {
         return commentService.submitComment(
@@ -29,6 +38,11 @@ public class CommentController {
         );
     }
 
+    /**
+     * Retrieves all comments.
+     *
+     * @return List of all comments.
+     */
     @GetMapping
     public List<Comment> getComments() {
         return commentRepository.findAll();
