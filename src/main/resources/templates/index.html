@@ -183,6 +183,10 @@
 </div>
 
 <script>
+    const expandedTickets = new Set(JSON.parse(localStorage.getItem('expandedTickets') || '[]'));
+    function saveExpanded() {
+        localStorage.setItem('expandedTickets', JSON.stringify([...expandedTickets]));
+    }
     async function submitComment() {
         const btn = document.getElementById('submitBtn');
         const author = document.getElementById('author').value;
@@ -214,14 +218,22 @@
         }
     }
 
-    function toggleDetails(btn) {
+    function toggleDetails(btn, ticketId) {
         const details = btn.nextElementSibling;
         if (details.style.display === "none" || !details.style.display) {
             details.style.display = "block";
             btn.innerText = "Hide Original Comment";
+            if (ticketId !== undefined) {
+                expandedTickets.add(ticketId);
+                saveExpanded();
+            }
         } else {
             details.style.display = "none";
             btn.innerText = "Show Original Comment";
+            if (ticketId !== undefined) {
+                expandedTickets.delete(ticketId);
+                saveExpanded();
+            }
         }
     }
 
@@ -261,9 +273,9 @@
                         <strong>AI Summary:</strong> ${t.summary || "No summary available"}
                     </div>
                     
-                    <button class="expand-btn" onclick="toggleDetails(this)">Show Original Comment</button>
+                    <button class="expand-btn" onclick="toggleDetails(this, ${t.id})">${expandedTickets.has(t.id) ? 'Hide Original Comment' : 'Show Original Comment'}</button>
                     
-                    <div class="ticket-details">
+                    <div class="ticket-details" style="${expandedTickets.has(t.id) ? 'display:block' : 'display:none'}">
                         <p style="margin:5px 0;"><strong>Original Author:</strong> ${t.originalComment ? t.originalComment.author : 'Unknown'}</p>
                         <p style="margin:5px 0;"><strong>Comment Text:</strong></p>
                         <div style="background:#f1f1f1; padding:8px; border-radius:4px; font-style:italic;">
