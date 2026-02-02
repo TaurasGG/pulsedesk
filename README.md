@@ -134,6 +134,93 @@ PulseDesk is an intelligent customer support ticketing system backend developed 
   - Original comment text
   - Original comment ID
 
+## Deployment
+
+### Localhost
+
+- Prerequisites:
+  - Java (recommended 21 or 23)
+  - Maven wrapper (included)
+- Configure environment variables (recommended for security):
+  - Windows PowerShell:
+    ```powershell
+    $env:HUGGINGFACE_API_TOKEN="hf_your_token"
+    $env:HUGGINGFACE_API_MODEL="meta-llama/Meta-Llama-3-8B-Instruct"
+    ```
+  - macOS/Linux:
+    ```bash
+    export HUGGINGFACE_API_TOKEN="hf_your_token"
+    export HUGGINGFACE_API_MODEL="meta-llama/Meta-Llama-3-8B-Instruct"
+    ```
+- Run:
+  ```bash
+  ./mvnw spring-boot:run
+  ```
+- Open:
+  - UI: http://localhost:8080/
+  - H2 Console: http://localhost:8080/h2-console
+
+Note: The app reads configuration from environment variables, defined in [application.properties](file:///c:/Users/taura/OneDrive/Documents/Code/Miscellaneous/IBM/pulsedesk/src/main/resources/application.properties). Keys:
+- `server.port=${PORT:8080}`
+- `huggingface.api.token=${HUGGINGFACE_API_TOKEN}`
+- `huggingface.api.model=${HUGGINGFACE_API_MODEL:meta-llama/Meta-Llama-3-8B-Instruct}`
+
+### Google Cloud (Cloud Run)
+
+- Recommended: Deploy via “source deploy” (no Dockerfile required). Cloud Build uses Buildpacks to build the container.
+- Setup:
+  ```bash
+  gcloud auth login
+  gcloud config set project YOUR_PROJECT_ID
+  gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com secretmanager.googleapis.com
+  ```
+- Create the secret with your Hugging Face token:
+  ```bash
+  echo -n "hf_your_token" > hf_token.txt
+  gcloud secrets create HF_TOKEN --data-file=hf_token.txt
+  ```
+- Grant Secret Manager access to Cloud Run runtime service account:
+  ```bash
+  # Secret-level permission (recommended)
+  gcloud secrets add-iam-policy-binding HF_TOKEN \
+    --member="serviceAccount:YOUR_SA@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor"
+  # Or project-level permission:
+  gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+    --member="serviceAccount:YOUR_SA@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor"
+  ```
+  Tip: To see the service account used by Cloud Run:
+  ```bash
+  gcloud run services describe pulsedesk --region us-central1 --format='value(spec.template.spec.serviceAccountName)'
+  ```
+- Deploy (source deploy):
+  ```bash
+  gcloud run deploy pulsedesk \
+    --source . \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --set-build-env-vars BP_JVM_VERSION=21 \
+    --set-env-vars HUGGINGFACE_API_MODEL=meta-llama/Meta-Llama-3-8B-Instruct \
+    --set-secrets HUGGINGFACE_API_TOKEN=HF_TOKEN:latest \
+    --memory 512Mi --cpu 1 --min-instances 0 --max-instances 3
+  ```
+- After deploy:
+  - Visit the Cloud Run URL shown in the output
+  - Test:
+    ```bash
+    curl -s https://YOUR_SERVICE_URL/comments
+    curl -s -X POST https://YOUR_SERVICE_URL/comments \
+      -H "Content-Type: application/json" \
+      -d '{"author":"Alice","text":"Main button to home is not working"}'
+    curl -s https://YOUR_SERVICE_URL/tickets
+    ```
+
+#### Notes
+- Keep `HUGGINGFACE_API_TOKEN` out of source; use Secret Manager.
+- `BP_JVM_VERSION=21` ensures Buildpacks build successfully with Spring Boot 4.
+- The app respects Cloud Run `PORT` via `server.port=${PORT:8080}`.
+
 ## AI Integration
 
 The system uses the `meta-llama/Meta-Llama-3-8B-Instruct` model hosted on Hugging Face. It sends a prompt instructing the AI to classify the comment and return a structured JSON response conforming to the internal data model.
