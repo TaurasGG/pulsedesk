@@ -26,10 +26,10 @@ public class HuggingFaceService {
     private final ObjectMapper objectMapper;
 
     public HuggingFaceService() {
-        this.objectMapper = new ObjectMapper()
-                .enable(com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+        this.objectMapper = com.fasterxml.jackson.databind.json.JsonMapper.builder()
+                .enable(com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .build();
         
-        // Configure coercion for empty strings to null (especially for Enums)
         this.objectMapper.coercionConfigDefaults()
                 .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
     }
@@ -42,7 +42,6 @@ public class HuggingFaceService {
      */
     public AiTicketResponse analyzeComment(String comment) {
 
-        // Use the router endpoint with OpenAI compatibility
         String url = "https://router.huggingface.co/v1/chat/completions";
 
         String systemPrompt = """
@@ -81,7 +80,6 @@ public class HuggingFaceService {
 
             String generatedText = "";
             
-            // OpenAI format response parsing: choices[0].message.content
             if (responseObj instanceof Map) {
                 Map<?, ?> map = (Map<?, ?>) responseObj;
                 if (map.containsKey("choices")) {
@@ -103,7 +101,6 @@ public class HuggingFaceService {
                 throw new RuntimeException("Empty response from AI");
             }
 
-            // Clean up content (remove markdown code blocks if present)
             generatedText = generatedText.replaceAll("```json", "").replaceAll("```", "").trim();
 
             return objectMapper.readValue(generatedText, AiTicketResponse.class);
@@ -119,7 +116,6 @@ public class HuggingFaceService {
             System.err.println("AI Analysis Failed: " + e.getMessage());
             e.printStackTrace();
             
-            // Fallback
             AiTicketResponse fallback = new AiTicketResponse();
             fallback.setTicket(false);
             return fallback;

@@ -16,8 +16,8 @@ PulseDesk is an intelligent customer support ticketing system backend developed 
 
 ## Tech Stack
 
-- **Java 17**
-- **Spring Boot 3.4.2**
+- **Java 21**
+- **Spring Boot 4.0.2**
   - Spring Web (REST API)
   - Spring Data JPA (Database Interaction)
   - H2 Database (In-memory storage)
@@ -123,6 +123,16 @@ PulseDesk is an intelligent customer support ticketing system backend developed 
   - `HuggingFaceService`: Communicates with the external AI API.
 - **Repository Layer**: Interfaces with the H2 database (`CommentRepository`, `TicketRepository`).
 - **Model Layer**: JPA Entities (`Comment`, `Ticket`).
+
+## Web UI
+
+- Side-by-side layout shows:
+  - **Recent Tickets** (left) and **Incoming Comments** (right)
+- Comments show their **ID** (e.g., `#5`)
+- Each ticket includes an **Expand** button to reveal:
+  - Original author
+  - Original comment text
+  - Original comment ID
 
 ## AI Integration
 

@@ -28,9 +28,6 @@ public class Ticket {
     @Column(length = 2000)
     private String summary;
 
-    /**
-     * The original comment that triggered this ticket's creation.
-     */
     @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(
             name = "original_comment_id",
